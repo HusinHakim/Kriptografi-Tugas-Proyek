@@ -1,5 +1,10 @@
 # RSA-OAEP-256 Encryption Tool (2048-bit) — TP Kripto
 
+## Dibuat oleh:
+### - Gilbert Kristian
+### - Husin Hidayatul Hakim
+### - Ivan Jehuda Angi
+
 Implementasi mandiri (full custom, tanpa library kriptografi) skema enkripsi
 **RSA-OAEP** dengan padding **OAEP berbasis SHA-256** dan kunci **2048 bit**,
 sesuai PKCS#1 v2.2 (RFC 8017). Aplikasi dilengkapi GUI berbasis CustomTkinter
@@ -11,7 +16,6 @@ untuk membangkitkan keypair, mengenkripsi, dan mendekripsi file apapun
 ## 1. Daftar Isi
 
 - [Fitur](#fitur)
-- [Struktur Proyek](#struktur-proyek)
 - [Cara Pakai](#cara-pakai)
   - [Instalasi](#instalasi)
   - [Menjalankan GUI](#menjalankan-gui)
@@ -38,25 +42,6 @@ untuk membangkitkan keypair, mengenkripsi, dan mendekripsi file apapun
 
 ---
 
-## Struktur Proyek
-
-```
-TP/
-├── rsa_core.py          # RSA primitives: Miller-Rabin, prime gen, keypair,
-│                        # extended Euclidean, RSAEP, RSADP
-├── oaep.py              # I2OSP, OS2IP, MGF1, OAEP encode/decode
-├── rsa_oaep.py          # High-level: chunked file encrypt/decrypt, key I/O
-├── gui.py               # CustomTkinter GUI (3 tab)
-├── main.py              # Entry point GUI
-├── tests/
-│   ├── test_roundtrip.py
-│   └── samples/         # (opsional) file uji: .txt, .png, .mp3, .mp4, .exe
-├── requirements.txt
-└── README.md
-```
-
----
-
 ## Cara Pakai
 
 ### Instalasi
@@ -69,6 +54,9 @@ pip install -r requirements.txt
 
 Hanya satu dependency: `customtkinter` (untuk GUI). Seluruh logika RSA-OAEP
 murni Python standar (`hashlib`, `secrets`, `math`, `os`).
+
+### Install Font (Disarankan)
+Pada folder `assets/font`, klik file font dan install. 
 
 ### Menjalankan GUI
 
