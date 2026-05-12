@@ -558,6 +558,17 @@ class App(ctk.CTk):
         self.enc_btn = self._primary_button(parent, "Encrypt", self._on_encrypt)
         self.enc_btn.grid(row=8, column=0, columnspan=3, padx=14, pady=(18, 14), sticky="ew")
 
+        self.enc_status = ctk.CTkLabel(
+            parent,
+            text="",
+            text_color=TEXT_MUTED,
+            font=self._font(13),
+            anchor="w",
+            justify="left",
+            wraplength=690,
+        )
+        self.enc_status.grid(row=9, column=0, columnspan=3, padx=14, pady=(0, 8), sticky="ew")
+
     def _on_encrypt(self):
         in_path = self.enc_in.get().strip()
         key_path = self.enc_key.get().strip()
@@ -637,6 +648,17 @@ class App(ctk.CTk):
 
         self.dec_btn = self._primary_button(parent, "Decrypt", self._on_decrypt)
         self.dec_btn.grid(row=8, column=0, columnspan=3, padx=14, pady=(18, 14), sticky="ew")
+
+        self.dec_status = ctk.CTkLabel(
+            parent,
+            text="",
+            text_color=TEXT_MUTED,
+            font=self._font(13),
+            anchor="w",
+            justify="left",
+            wraplength=690,
+        )
+        self.dec_status.grid(row=9, column=0, columnspan=3, padx=14, pady=(0, 8), sticky="ew")
 
     def _on_decrypt(self):
         in_path = self.dec_in.get().strip()
