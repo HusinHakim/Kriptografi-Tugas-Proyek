@@ -84,6 +84,8 @@ python main.py
 
 Hasil dekripsi pasti identik (byte-for-byte) dengan plaintext asli.
 
+Jangan lupa untuk reset setiap ingin encrypt atau decrypt file baru.
+
 ---
 
 ## Format File
