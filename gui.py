@@ -375,6 +375,7 @@ class App(ctk.CTk):
         entry.bind("<Double-Button-1>", lambda _event: "break")
         entry.bind("<Triple-Button-1>", lambda _event: "break")
         entry.bind("<Button-3>", lambda _event: "break")
+        entry._placeholder_value = placeholder
 
         ctk.CTkButton(
             parent,
@@ -403,6 +404,21 @@ class App(ctk.CTk):
             font=self._font(14, "bold"),
         )
 
+    def _secondary_button(self, parent, text, command, *, height=48):
+        return ctk.CTkButton(
+            parent,
+            text=text,
+            command=command,
+            height=height,
+            corner_radius=24,
+            fg_color="#FFFFFF",
+            hover_color="#F1ECFB",
+            border_width=1,
+            border_color=BORDER,
+            text_color=ACCENT,
+            font=self._font(14, "bold"),
+        )
+
     @staticmethod
     def _ask_open(entry):
         path = filedialog.askopenfilename()
@@ -416,11 +432,55 @@ class App(ctk.CTk):
             App._set_entry_value(entry, path)
 
     @staticmethod
+    def _ask_save_suggested(entry, suggested_path: str):
+        initialdir = None
+        initialfile = suggested_path
+        if suggested_path:
+            initialdir = os.path.dirname(suggested_path) or None
+            initialfile = os.path.basename(suggested_path)
+        options = {"initialfile": initialfile}
+        if initialdir:
+            options["initialdir"] = initialdir
+        path = filedialog.asksaveasfilename(**options)
+        if path:
+            App._set_entry_value(entry, path)
+
+    @staticmethod
+    def _entry_real_value(entry):
+        value = entry.get().strip()
+        placeholder = getattr(entry, "_placeholder_value", "")
+        if value == placeholder:
+            return ""
+        return value
+
+    @staticmethod
     def _set_entry_value(entry, value: str):
         entry.configure(state="normal")
         entry.delete(0, "end")
         entry.insert(0, value)
         entry.configure(state="readonly")
+
+    @staticmethod
+    def _reset_entry(entry):
+        App._set_entry_value(entry, getattr(entry, "_placeholder_value", ""))
+
+    @staticmethod
+    def _reset_entries(*entries):
+        for entry in entries:
+            App._reset_entry(entry)
+
+    @staticmethod
+    def _suggest_encrypted_path(path: str) -> str:
+        return f"{path}.enc"
+
+    @staticmethod
+    def _suggest_decrypted_path(path: str) -> str:
+        if path.lower().endswith(".enc"):
+            plain_path = path[:-4]
+            base, ext = os.path.splitext(plain_path)
+            return f"{base}.decrypted{ext}" if ext else f"{plain_path}.decrypted"
+        base, ext = os.path.splitext(path)
+        return f"{base}.decrypted{ext}" if ext else f"{path}.decrypted"
 
     def _run_async(self, work, on_done=None):
         def runner():
@@ -480,7 +540,14 @@ class App(ctk.CTk):
             self._on_gen,
             height=44,
         )
-        self.gen_btn.grid(row=6, column=0, columnspan=3, padx=14, pady=(10, 8), sticky="ew")
+        self.gen_btn.grid(row=6, column=0, columnspan=2, padx=(14, 10), pady=(10, 8), sticky="ew")
+        self.gen_reset_btn = self._secondary_button(
+            parent,
+            "Reset",
+            self._reset_gen,
+            height=44,
+        )
+        self.gen_reset_btn.grid(row=6, column=2, padx=(0, 14), pady=(10, 8), sticky="ew")
 
         self.gen_status = ctk.CTkLabel(
             parent,
@@ -494,8 +561,8 @@ class App(ctk.CTk):
         self.gen_status.grid(row=7, column=0, columnspan=3, padx=14, pady=(0, 8), sticky="ew")
 
     def _on_gen(self):
-        pub_path = self.gen_pub.get().strip()
-        priv_path = self.gen_priv.get().strip()
+        pub_path = self._entry_real_value(self.gen_pub)
+        priv_path = self._entry_real_value(self.gen_priv)
         if not pub_path or not priv_path:
             messagebox.showerror("Error", "Tentukan path file public key dan private key.")
             return
@@ -524,6 +591,10 @@ class App(ctk.CTk):
 
         self._run_async(work, done)
 
+    def _reset_gen(self):
+        self._reset_entries(self.gen_pub, self.gen_priv)
+        self.gen_status.configure(text="")
+
     # --------------------------- Encrypt ---------------------------
 
     def _build_encrypt(self, parent):
@@ -537,7 +608,7 @@ class App(ctk.CTk):
             parent,
             2,
             "Plaintext file",
-            self._ask_open,
+            self._ask_encrypt_input,
             "Pilih file input apa pun",
         )
         self.enc_key = self._file_row(
@@ -551,12 +622,14 @@ class App(ctk.CTk):
             parent,
             6,
             "Ciphertext output",
-            lambda entry: self._ask_save(entry, "ciphertext.bin"),
-            "Contoh: ciphertext.bin",
+            self._ask_encrypt_output,
+            "Contoh: pilih plaintext dulu agar nama ciphertext mengikuti file asli",
         )
 
         self.enc_btn = self._primary_button(parent, "Encrypt", self._on_encrypt)
-        self.enc_btn.grid(row=8, column=0, columnspan=3, padx=14, pady=(18, 14), sticky="ew")
+        self.enc_btn.grid(row=8, column=0, columnspan=2, padx=(14, 10), pady=(18, 14), sticky="ew")
+        self.enc_reset_btn = self._secondary_button(parent, "Reset", self._reset_encrypt)
+        self.enc_reset_btn.grid(row=8, column=2, padx=(0, 14), pady=(18, 14), sticky="ew")
 
         self.enc_status = ctk.CTkLabel(
             parent,
@@ -570,9 +643,9 @@ class App(ctk.CTk):
         self.enc_status.grid(row=9, column=0, columnspan=3, padx=14, pady=(0, 8), sticky="ew")
 
     def _on_encrypt(self):
-        in_path = self.enc_in.get().strip()
-        key_path = self.enc_key.get().strip()
-        out_path = self.enc_out.get().strip()
+        in_path = self._entry_real_value(self.enc_in)
+        key_path = self._entry_real_value(self.enc_key)
+        out_path = self._entry_real_value(self.enc_out)
         if not (in_path and key_path and out_path):
             messagebox.showerror("Error", "Lengkapi semua path file.")
             return
@@ -615,6 +688,23 @@ class App(ctk.CTk):
 
         self._run_async(work, done)
 
+    def _reset_encrypt(self):
+        self._reset_entries(self.enc_in, self.enc_key, self.enc_out)
+        self.enc_status.configure(text="")
+
+    def _ask_encrypt_input(self, entry):
+        path = filedialog.askopenfilename()
+        if not path:
+            return
+        self._set_entry_value(entry, path)
+        if not self._entry_real_value(self.enc_out):
+            self._set_entry_value(self.enc_out, self._suggest_encrypted_path(path))
+
+    def _ask_encrypt_output(self, entry):
+        in_path = self._entry_real_value(self.enc_in)
+        suggested = self._suggest_encrypted_path(in_path) if in_path else "ciphertext.enc"
+        self._ask_save_suggested(entry, suggested)
+
     # --------------------------- Decrypt ---------------------------
 
     def _build_decrypt(self, parent):
@@ -628,7 +718,7 @@ class App(ctk.CTk):
             parent,
             2,
             "Ciphertext file",
-            self._ask_open,
+            self._ask_decrypt_input,
             "Pilih file ciphertext",
         )
         self.dec_key = self._file_row(
@@ -642,12 +732,14 @@ class App(ctk.CTk):
             parent,
             6,
             "Plaintext output",
-            lambda entry: self._ask_save(entry, "plaintext.bin"),
-            "Contoh: plaintext.bin",
+            self._ask_decrypt_output,
+            "Contoh: pilih ciphertext dulu agar ekstensi plaintext kembali seperti file asli",
         )
 
         self.dec_btn = self._primary_button(parent, "Decrypt", self._on_decrypt)
-        self.dec_btn.grid(row=8, column=0, columnspan=3, padx=14, pady=(18, 14), sticky="ew")
+        self.dec_btn.grid(row=8, column=0, columnspan=2, padx=(14, 10), pady=(18, 14), sticky="ew")
+        self.dec_reset_btn = self._secondary_button(parent, "Reset", self._reset_decrypt)
+        self.dec_reset_btn.grid(row=8, column=2, padx=(0, 14), pady=(18, 14), sticky="ew")
 
         self.dec_status = ctk.CTkLabel(
             parent,
@@ -661,9 +753,9 @@ class App(ctk.CTk):
         self.dec_status.grid(row=9, column=0, columnspan=3, padx=14, pady=(0, 8), sticky="ew")
 
     def _on_decrypt(self):
-        in_path = self.dec_in.get().strip()
-        key_path = self.dec_key.get().strip()
-        out_path = self.dec_out.get().strip()
+        in_path = self._entry_real_value(self.dec_in)
+        key_path = self._entry_real_value(self.dec_key)
+        out_path = self._entry_real_value(self.dec_out)
         if not (in_path and key_path and out_path):
             messagebox.showerror("Error", "Lengkapi semua path file.")
             return
@@ -705,3 +797,20 @@ class App(ctk.CTk):
             )
 
         self._run_async(work, done)
+
+    def _reset_decrypt(self):
+        self._reset_entries(self.dec_in, self.dec_key, self.dec_out)
+        self.dec_status.configure(text="")
+
+    def _ask_decrypt_input(self, entry):
+        path = filedialog.askopenfilename()
+        if not path:
+            return
+        self._set_entry_value(entry, path)
+        if not self._entry_real_value(self.dec_out):
+            self._set_entry_value(self.dec_out, self._suggest_decrypted_path(path))
+
+    def _ask_decrypt_output(self, entry):
+        in_path = self._entry_real_value(self.dec_in)
+        suggested = self._suggest_decrypted_path(in_path) if in_path else "plaintext.decrypted"
+        self._ask_save_suggested(entry, suggested)
