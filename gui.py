@@ -471,14 +471,22 @@ class App(ctk.CTk):
 
     @staticmethod
     def _suggest_encrypted_path(path: str) -> str:
-        return f"{path}.enc"
+        folder = os.path.dirname(path)
+        filename = os.path.basename(path)
+        encrypted_name = f"enc_{filename}.enc"
+        return os.path.join(folder, encrypted_name) if folder else encrypted_name
 
     @staticmethod
     def _suggest_decrypted_path(path: str) -> str:
         if path.lower().endswith(".enc"):
             plain_path = path[:-4]
-            base, ext = os.path.splitext(plain_path)
-            return f"{base}.decrypted{ext}" if ext else f"{plain_path}.decrypted"
+            folder = os.path.dirname(plain_path)
+            filename = os.path.basename(plain_path)
+            if filename.startswith("enc_"):
+                filename = filename[4:]
+            base, ext = os.path.splitext(filename)
+            decrypted_name = f"{base}.decrypted{ext}" if ext else f"{filename}.decrypted"
+            return os.path.join(folder, decrypted_name) if folder else decrypted_name
         base, ext = os.path.splitext(path)
         return f"{base}.decrypted{ext}" if ext else f"{path}.decrypted"
 
@@ -623,7 +631,7 @@ class App(ctk.CTk):
             6,
             "Ciphertext output",
             self._ask_encrypt_output,
-            "Contoh: pilih plaintext dulu agar nama ciphertext mengikuti file asli",
+            "pilih plaintext dulu",
         )
 
         self.enc_btn = self._primary_button(parent, "Encrypt", self._on_encrypt)
@@ -647,7 +655,7 @@ class App(ctk.CTk):
         key_path = self._entry_real_value(self.enc_key)
         out_path = self._entry_real_value(self.enc_out)
         if not (in_path and key_path and out_path):
-            messagebox.showerror("Error", "Lengkapi semua path file.")
+            messagebox.showerror("Error", "Lengkapi pengisian semua file.")
             return
         if not os.path.isfile(in_path):
             messagebox.showerror("Error", f"File plaintext tidak ditemukan: {in_path}")
@@ -733,7 +741,7 @@ class App(ctk.CTk):
             6,
             "Plaintext output",
             self._ask_decrypt_output,
-            "Contoh: pilih ciphertext dulu agar ekstensi plaintext kembali seperti file asli",
+            "pilih ciphertext dulu",
         )
 
         self.dec_btn = self._primary_button(parent, "Decrypt", self._on_decrypt)
@@ -757,7 +765,7 @@ class App(ctk.CTk):
         key_path = self._entry_real_value(self.dec_key)
         out_path = self._entry_real_value(self.dec_out)
         if not (in_path and key_path and out_path):
-            messagebox.showerror("Error", "Lengkapi semua path file.")
+            messagebox.showerror("Error", "Lengkapi pengisian semua file.")
             return
         if not os.path.isfile(in_path):
             messagebox.showerror("Error", f"File ciphertext tidak ditemukan: {in_path}")

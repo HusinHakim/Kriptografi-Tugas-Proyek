@@ -75,13 +75,11 @@ python main.py
 2. **Tab "Encrypt"**
    - Pilih file plaintext (boleh biner: gambar, video, exe, dll).
    - Pilih file public key.
-   - Tentukan path file output ciphertext.
    - Klik **Encrypt**. Progress bar menunjukkan kemajuan per blok.
 
 3. **Tab "Decrypt"**
    - Pilih file ciphertext.
    - Pilih file private key.
-   - Tentukan path file output plaintext.
    - Klik **Decrypt**.
 
 Hasil dekripsi pasti identik (byte-for-byte) dengan plaintext asli.
@@ -182,8 +180,8 @@ executable), letakkan file uji ke folder `tests/samples/`, contoh:
 
 ```
 tests/samples/
-├── note.txt
-├── photo.png
+├── file.txt
+├── photo.jpg
 ├── song.mp3
 ├── clip.mp4
 └── tool.exe
@@ -242,7 +240,3 @@ inverse, RSA encrypt/decrypt, OAEP encode/decode, MGF1, I2OSP, OS2IP)
 **diimplementasikan sendiri** di `rsa_core.py` dan `oaep.py`.
 
 ---
-
-## Lisensi
-
-Dibuat untuk Tugas Proyek mata kuliah Kriptografi.
